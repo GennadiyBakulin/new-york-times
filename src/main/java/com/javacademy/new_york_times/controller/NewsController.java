@@ -2,9 +2,11 @@ package com.javacademy.new_york_times.controller;
 
 import com.javacademy.new_york_times.dto.NewsDto;
 import com.javacademy.new_york_times.service.NewsService;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -31,41 +34,42 @@ public class NewsController {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
+  @CacheEvict(value = "news")
   public void createNews(@RequestBody NewsDto newsDto) {
     service.save(newsDto);
   }
 
   @DeleteMapping("/{id}")
   @ResponseStatus(HttpStatus.OK)
+  @CacheEvict(value = "news")
   public boolean deleteNews(@PathVariable Integer id) {
     return service.deleteByNumber(id);
   }
 
-  @GetMapping("/{id}")
-  @ResponseStatus(HttpStatus.OK)
-  public NewsDto findByNumberNews(@PathVariable Integer id) {
-    return service.findByNumber(id);
-  }
-
   @GetMapping
   @ResponseStatus(HttpStatus.OK)
-  public List<NewsDto> findAllNews() {
-    return service.findAll();
+  @Cacheable(value = "news")
+  public ResponseEntity<?> getNews(@RequestParam(required = false) Integer id) {
+    if (id == null) {
+      return ResponseEntity.ok(service.findAll());
+    }
+    return ResponseEntity.ok(service.findByNumber(id));
   }
 
   @PatchMapping
   @ResponseStatus(HttpStatus.CREATED)
+  @CacheEvict(value = "news")
   public void updateNews(@RequestBody NewsDto newsDto) {
     service.update(newsDto);
   }
 
-  @GetMapping("/text/{id}")
+  @GetMapping("/{id}/text")
   @ResponseStatus(HttpStatus.OK)
   public String getNewsText(@PathVariable Integer id) {
     return service.getNewsText(id);
   }
 
-  @GetMapping("/author/{id}")
+  @GetMapping("/{id}/author")
   @ResponseStatus(HttpStatus.OK)
   public String getNewsAuthor(@PathVariable Integer id) {
     return service.getNewsAuthor(id);
