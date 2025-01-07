@@ -1,49 +1,66 @@
 package com.javacademy.new_york_times.service;
 
 import com.javacademy.new_york_times.dto.NewsDto;
+import com.javacademy.new_york_times.dto.PageDto;
 import com.javacademy.new_york_times.entity.NewsEntity;
 import com.javacademy.new_york_times.mapper.NewsMapper;
 import com.javacademy.new_york_times.repository.NewsRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
+import java.util.Comparator;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
 
 
 @Service
 @RequiredArgsConstructor
 public class NewsService {
-    private final NewsRepository newsRepository;
-    private final NewsMapper newsMapper;
 
-    public void save(NewsDto dto) {
-        newsRepository.save(newsMapper.toEntity(dto));
-    }
+  private final int PAGE_SIZE = 10;
 
-    /**
-     * Переписать этот метод
-     */
-    public List<NewsDto> findAll() {
-        return newsMapper.toDtos(newsRepository.findAll());
-    }
+  private final NewsRepository newsRepository;
+  private final NewsMapper newsMapper;
 
-    public NewsDto findByNumber(Integer number) {
-        return newsMapper.toDto(newsRepository.findByNumber(number).orElseThrow());
-    }
+  public void save(NewsDto dto) {
+    newsRepository.save(newsMapper.toEntity(dto));
+  }
 
-    public boolean deleteByNumber(Integer number) {
-        return newsRepository.deleteByNumber(number);
+  /**
+   * Переписать этот метод
+   */
+  public ResponseEntity<?> findAll(Integer pageNumber) {
+    List<NewsEntity> allNews = newsRepository.findAll();
+    if (pageNumber == null) {
+      pageNumber = 0;
     }
+    List<NewsDto> newsDtoList = allNews.stream()
+        .sorted(Comparator.comparing(NewsEntity::getNumber))
+        .skip((long) PAGE_SIZE * pageNumber)
+        .limit(PAGE_SIZE)
+        .map(newsMapper::toDto)
+        .toList();
+    int totalPages = allNews.size() / PAGE_SIZE;
+    return ResponseEntity.ok(
+        new PageDto<>(newsDtoList, totalPages, pageNumber, PAGE_SIZE, newsDtoList.size()));
+  }
 
-    public void update(NewsDto dto) {
-        newsRepository.update(newsMapper.toEntity(dto));
-    }
+  public NewsDto findByNumber(Integer number) {
+    return newsMapper.toDto(newsRepository.findByNumber(number).orElseThrow());
+  }
 
-    public String getNewsText(Integer newsNumber) {
-        return newsRepository.findByNumber(newsNumber).map(NewsEntity::getText).orElseThrow();
-    }
+  public boolean deleteByNumber(Integer number) {
+    return newsRepository.deleteByNumber(number);
+  }
 
-    public String getNewsAuthor(Integer newsNumber) {
-        return newsRepository.findByNumber(newsNumber).map(NewsEntity::getAuthor).orElseThrow();
-    }
+  public void update(NewsDto dto) {
+    newsRepository.update(newsMapper.toEntity(dto));
+  }
+
+  public String getNewsText(Integer newsNumber) {
+    return newsRepository.findByNumber(newsNumber).map(NewsEntity::getText).orElseThrow();
+  }
+
+  public String getNewsAuthor(Integer newsNumber) {
+    return newsRepository.findByNumber(newsNumber).map(NewsEntity::getAuthor).orElseThrow();
+  }
 }
