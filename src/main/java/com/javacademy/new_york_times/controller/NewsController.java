@@ -49,11 +49,15 @@ public class NewsController {
   @GetMapping
   @ResponseStatus(HttpStatus.OK)
   @Cacheable(value = "news")
-  public ResponseEntity<?> getNews(@RequestParam(required = false) Integer id) {
-    if (id == null) {
+  public ResponseEntity<?> getNews(@RequestParam(required = false) Integer newsId,
+      @RequestParam(required = false) Integer pageNumber) {
+    if (newsId != null) {
+      return ResponseEntity.ok(service.findByNumber(newsId));
+    }
+    if (pageNumber == null) {
       return ResponseEntity.ok(service.findAll());
     }
-    return ResponseEntity.ok(service.findByNumber(id));
+    return ResponseEntity.ok(service.findAll());
   }
 
   @PatchMapping
