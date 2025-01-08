@@ -11,7 +11,6 @@ import io.restassured.common.mapper.TypeRef;
 import io.restassured.filter.log.LogDetail;
 import io.restassured.specification.RequestSpecification;
 import io.restassured.specification.ResponseSpecification;
-import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -150,15 +149,14 @@ class NewsControllerTest {
     int numberLastNews = repository.findAll().size();
     NewsDto expectedNews = service.findByNumber(numberLastNews);
     NewsDto resultNews = RestAssured.given(requestSpecification)
-        .queryParam("newsId", numberLastNews)
-        .get()
+        .pathParam("id", numberLastNews)
+        .get("/{id}")
         .then()
         .spec(responseSpecification)
         .statusCode(200)
         .extract()
         .body()
-        .as(new TypeRef<>() {
-        });
+        .as(NewsDto.class);
 
     Assertions.assertEquals(expectedNews.getTitle(), resultNews.getTitle());
     Assertions.assertEquals(expectedNews.getText(), resultNews.getText());
@@ -169,25 +167,7 @@ class NewsControllerTest {
   @DisplayName("Успешное получение всех новостей")
   void getAllNewsSuccess() {
     int countAllNews = repository.findAll().size();
-    List<NewsDto> resultAllNewsList = RestAssured.given(requestSpecification)
-        .get()
-        .then()
-        .spec(responseSpecification)
-        .statusCode(200)
-        .extract()
-        .body()
-        .as(new TypeRef<>() {
-        });
-
-    Assertions.assertEquals(countAllNews, resultAllNewsList.size());
-  }
-
-  @Test
-  @DisplayName("Успешное получение всех новостей в рамках пагинации")
-  void getAllNewsSuccessPagination() {
-    int countAllNews = repository.findAll().size();
     PageDto<NewsDto> resultPageDto = RestAssured.given(requestSpecification)
-        .queryParam("pageNumber", 0)
         .get()
         .then()
         .spec(responseSpecification)
@@ -200,6 +180,28 @@ class NewsControllerTest {
     Assertions.assertEquals(10, resultPageDto.getContent().size());
     Assertions.assertEquals(100, resultPageDto.getCountPages());
     Assertions.assertEquals(0, resultPageDto.getCurrentPage());
+    Assertions.assertEquals(10, resultPageDto.getMaxPageSize());
+    Assertions.assertEquals(countAllNews, resultPageDto.getCountAllNews());
+  }
+
+  @Test
+  @DisplayName("Успешное получение всех новостей в рамках пагинации")
+  void getAllNewsSuccessPagination() {
+    int countAllNews = repository.findAll().size();
+    PageDto<NewsDto> resultPageDto = RestAssured.given(requestSpecification)
+        .queryParam("pageNumber", 1)
+        .get()
+        .then()
+        .spec(responseSpecification)
+        .statusCode(200)
+        .extract()
+        .body()
+        .as(new TypeRef<>() {
+        });
+
+    Assertions.assertEquals(10, resultPageDto.getContent().size());
+    Assertions.assertEquals(100, resultPageDto.getCountPages());
+    Assertions.assertEquals(1, resultPageDto.getCurrentPage());
     Assertions.assertEquals(10, resultPageDto.getMaxPageSize());
     Assertions.assertEquals(countAllNews, resultPageDto.getCountAllNews());
   }

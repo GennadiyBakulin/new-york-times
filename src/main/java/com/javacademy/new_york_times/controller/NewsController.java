@@ -1,12 +1,12 @@
 package com.javacademy.new_york_times.controller;
 
 import com.javacademy.new_york_times.dto.NewsDto;
+import com.javacademy.new_york_times.dto.PageDto;
 import com.javacademy.new_york_times.service.NewsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -46,15 +46,18 @@ public class NewsController {
     return service.deleteByNumber(id);
   }
 
+  @GetMapping("/{id}")
+  @ResponseStatus(HttpStatus.OK)
+  @Cacheable(cacheNames = "news")
+  public NewsDto getNews(@PathVariable Integer id) {
+    return service.findByNumber(id);
+  }
+
   @GetMapping
   @ResponseStatus(HttpStatus.OK)
   @Cacheable(cacheNames = "news")
-  public ResponseEntity<?> getNews(@RequestParam(required = false) Integer newsId,
-      @RequestParam(required = false) Integer pageNumber) {
-    if (newsId == null) {
-      return service.findAll(pageNumber);
-    }
-    return ResponseEntity.ok(service.findByNumber(newsId));
+  public PageDto<NewsDto> getAllNews(@RequestParam(required = false) Integer pageNumber) {
+    return service.findAll(pageNumber);
   }
 
   @PatchMapping
