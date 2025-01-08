@@ -32,12 +32,12 @@ public class NewsService {
     if (pageNumber == null) {
       pageNumber = 0;
     }
-    List<NewsDto> newsDtoList = allNews.stream()
+    List<NewsEntity> newsEntityList = allNews.stream()
         .sorted(Comparator.comparing(NewsEntity::getNumber))
         .skip((long) PAGE_SIZE * pageNumber)
         .limit(PAGE_SIZE)
-        .map(newsMapper::toDto)
         .toList();
+    List<NewsDto> newsDtoList = newsMapper.toDtos(newsEntityList);
     int totalPages = allNews.size() / PAGE_SIZE;
     return new PageDto<>(newsDtoList, totalPages, pageNumber, PAGE_SIZE, newsDtoList.size());
   }
