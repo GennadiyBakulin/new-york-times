@@ -52,7 +52,7 @@ public class NewsController {
   public ResponseEntity<?> getNews(@RequestParam(required = false) Integer newsId,
       @RequestParam(required = false) Integer pageNumber) {
     if (newsId == null) {
-      return service.findAll(pageNumber);
+      return ResponseEntity.ok(service.findAll(pageNumber));
     }
     return ResponseEntity.ok(service.findByNumber(newsId));
   }
