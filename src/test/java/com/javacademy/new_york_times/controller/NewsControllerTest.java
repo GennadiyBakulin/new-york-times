@@ -1,14 +1,17 @@
 package com.javacademy.new_york_times.controller;
 
 import com.javacademy.new_york_times.dto.NewsDto;
+import com.javacademy.new_york_times.dto.PageDto;
 import com.javacademy.new_york_times.repository.NewsRepository;
 import com.javacademy.new_york_times.service.NewsService;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.builder.ResponseSpecBuilder;
+import io.restassured.common.mapper.TypeRef;
 import io.restassured.filter.log.LogDetail;
 import io.restassured.specification.RequestSpecification;
 import io.restassured.specification.ResponseSpecification;
+import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,10 +29,8 @@ class NewsControllerTest {
 
   @Autowired
   private NewsService service;
-
   @Autowired
   private NewsRepository repository;
-
   private final RequestSpecification requestSpecification = new RequestSpecBuilder()
       .setBasePath("/news")
       .log(LogDetail.ALL)
@@ -94,7 +95,6 @@ class NewsControllerTest {
   void getNewsTextSuccess() {
     int numberLastNews = repository.findAll().size();
     String expected = service.getNewsText(numberLastNews);
-
     String result = RestAssured.given(requestSpecification)
         .pathParam("id", numberLastNews)
         .get("/{id}/text")
@@ -112,7 +112,6 @@ class NewsControllerTest {
   void getNewsAuthorSuccess() {
     int numberLastNews = repository.findAll().size();
     String expected = service.getNewsAuthor(numberLastNews);
-
     String result = RestAssured.given(requestSpecification)
         .pathParam("id", numberLastNews)
         .get("/{id}/author")
@@ -129,7 +128,6 @@ class NewsControllerTest {
   @DisplayName("Успешное удаление новости")
   void deleteNewsSuccess() {
     int countNewsBeforeDelete = repository.findAll().size();
-
     Boolean result = RestAssured.given(requestSpecification)
         .pathParam("id", countNewsBeforeDelete)
         .delete("/{id}")
@@ -149,5 +147,60 @@ class NewsControllerTest {
   @Test
   @DisplayName("Успешное получение новости")
   void getNewsSuccess() {
+    int numberLastNews = repository.findAll().size();
+    NewsDto expectedNews = service.findByNumber(numberLastNews);
+    NewsDto resultNews = RestAssured.given(requestSpecification)
+        .queryParam("newsId", numberLastNews)
+        .get()
+        .then()
+        .spec(responseSpecification)
+        .statusCode(200)
+        .extract()
+        .body()
+        .as(new TypeRef<>() {
+        });
+
+    Assertions.assertEquals(expectedNews.getTitle(), resultNews.getTitle());
+    Assertions.assertEquals(expectedNews.getText(), resultNews.getText());
+    Assertions.assertEquals(expectedNews.getAuthor(), resultNews.getAuthor());
+  }
+
+  @Test
+  @DisplayName("Успешное получение всех новостей")
+  void getAllNewsSuccess() {
+    int countAllNews = repository.findAll().size();
+    List<NewsDto> resultAllNewsList = RestAssured.given(requestSpecification)
+        .get()
+        .then()
+        .spec(responseSpecification)
+        .statusCode(200)
+        .extract()
+        .body()
+        .as(new TypeRef<>() {
+        });
+
+    Assertions.assertEquals(countAllNews, resultAllNewsList.size());
+  }
+
+  @Test
+  @DisplayName("Успешное получение всех новостей в рамках пагинации")
+  void getAllNewsSuccessPagination() {
+    int countAllNews = repository.findAll().size();
+    PageDto<NewsDto> resultPageDto = RestAssured.given(requestSpecification)
+        .queryParam("pageNumber", 0)
+        .get()
+        .then()
+        .spec(responseSpecification)
+        .statusCode(200)
+        .extract()
+        .body()
+        .as(new TypeRef<>() {
+        });
+
+    Assertions.assertEquals(10, resultPageDto.getContent().size());
+    Assertions.assertEquals(100, resultPageDto.getCountPages());
+    Assertions.assertEquals(0, resultPageDto.getCurrentPage());
+    Assertions.assertEquals(10, resultPageDto.getMaxPageSize());
+    Assertions.assertEquals(countAllNews, resultPageDto.getCountAllNews());
   }
 }

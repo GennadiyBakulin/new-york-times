@@ -8,8 +8,8 @@ import com.javacademy.new_york_times.repository.NewsRepository;
 import java.util.Comparator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
 
 @Service
 @RequiredArgsConstructor
@@ -27,10 +27,11 @@ public class NewsService {
   /**
    * Переписать этот метод
    */
-  public PageDto<NewsDto> findAll(Integer pageNumber) {
+  public ResponseEntity<?> findAll(Integer pageNumber) {
     List<NewsEntity> allNews = newsRepository.findAll();
     if (pageNumber == null) {
-      pageNumber = 0;
+      List<NewsDto> newsDtoList = newsMapper.toDtos(allNews);
+      return ResponseEntity.ok(newsDtoList);
     }
     List<NewsEntity> newsEntityList = allNews.stream()
         .sorted(Comparator.comparing(NewsEntity::getNumber))
@@ -39,7 +40,9 @@ public class NewsService {
         .toList();
     List<NewsDto> newsDtoList = newsMapper.toDtos(newsEntityList);
     int totalPages = allNews.size() / PAGE_SIZE;
-    return new PageDto<>(newsDtoList, totalPages, pageNumber, PAGE_SIZE, newsDtoList.size());
+    PageDto<NewsDto> pageDto = new PageDto<>(newsDtoList, totalPages, pageNumber, PAGE_SIZE,
+        newsDtoList.size(), allNews.size());
+    return ResponseEntity.ok(pageDto);
   }
 
   public NewsDto findByNumber(Integer number) {

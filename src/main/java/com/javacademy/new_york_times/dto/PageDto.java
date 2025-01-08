@@ -11,4 +11,5 @@ public class PageDto<T> {
   private final Integer currentPage;
   private final Integer maxPageSize;
   private final Integer size;
+  private final Integer countAllNews;
 }
