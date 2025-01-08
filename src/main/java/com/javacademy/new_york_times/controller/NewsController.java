@@ -34,21 +34,21 @@ public class NewsController {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  @CacheEvict(value = "news", allEntries = true)
+  @CacheEvict(cacheNames = "news")
   public void createNews(@RequestBody NewsDto newsDto) {
     service.save(newsDto);
   }
 
   @DeleteMapping("/{id}")
   @ResponseStatus(HttpStatus.OK)
-  @CacheEvict(value = "news", allEntries = true)
+  @CacheEvict(cacheNames = "news")
   public boolean deleteNews(@PathVariable Integer id) {
     return service.deleteByNumber(id);
   }
 
   @GetMapping
   @ResponseStatus(HttpStatus.OK)
-  @Cacheable(value = "news")
+  @Cacheable(cacheNames = "news")
   public ResponseEntity<?> getNews(@RequestParam(required = false) Integer newsId,
       @RequestParam(required = false) Integer pageNumber) {
     if (newsId == null) {
@@ -59,7 +59,7 @@ public class NewsController {
 
   @PatchMapping
   @ResponseStatus(HttpStatus.CREATED)
-  @CacheEvict(value = "news", allEntries = true)
+  @CacheEvict(cacheNames = "news")
   public void updateNews(@RequestBody NewsDto newsDto) {
     service.update(newsDto);
   }
